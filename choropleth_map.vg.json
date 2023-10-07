@@ -1,0 +1,188 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "background": "white",
+  "padding": 5,
+  "width": 800,
+  "height": 400,
+  "title": {
+    "text": "Number of International Students (2022)",
+    "frame": "group"
+  },
+  "style": "cell",
+  "signals": [
+    {
+      "name": "year",
+      "value": 2022,
+      "bind": {"input": "range", "min": 2013, "max": 2022, "step": 1}
+    }
+  ],
+  "data": [
+    {
+      "name": "source_1",
+      "values": [
+        {
+          "2013": 2235,
+          "2014": 2180,
+          "2015": 2415,
+          "2016": 2515,
+          "2017": 2735,
+          "2018": 2685,
+          "2019": 2650,
+          "2020": 1775,
+          "2021": 625,
+          "2022": 655,
+          "Country of citizenship": "United States of America"
+        },
+        {
+          "2013": 485,
+          "2014": 430,
+          "2015": 460,
+          "2016": 470,
+          "2017": 465,
+          "2018": 465,
+          "2019": 465,
+          "2020": 435,
+          "2021": 265,
+          "2022": 220,
+          "Country of citizenship": "United Kingdom"
+        },
+        {
+          "2013": 55,
+          "2014": 60,
+          "2015": 50,
+          "2016": 65,
+          "2017": 60,
+          "2018": 60,
+          "2019": 45,
+          "2020": 55,
+          "2021": 70,
+          "2022": 55,
+          "Country of citizenship": "Australia"
+        },
+        {
+          "2013": 1710,
+          "2014": 1440,
+          "2015": 1410,
+          "2016": 1535,
+          "2017": 1585,
+          "2018": 1685,
+          "2019": 1510,
+          "2020": 1185,
+          "2021": 940,
+          "2022": 875,
+          "Country of citizenship": "Malaysia"
+        }
+      ]
+    },
+    {
+      "name": "source_0",
+      "url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/3_choropleth_map/js/ne_110m_admin_0_countries.topojson",
+      "format": {
+        "type": "topojson",
+        "feature": "ne_110m_admin_0_countries",
+        "parse": {}
+      },
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "datum[\"properties\"] && datum[\"properties\"][\"NAME\"]",
+          "as": "properties.NAME"
+        },
+        {
+          "type": "lookup",
+          "from": "source_1",
+          "key": "Country of citizenship",
+          "fields": ["properties.NAME"],
+          "values": ["2022"]
+        },
+        {
+          "type": "formula",
+          "expr": "toNumber(replace(datum[\"2022\"], ',', ''))",
+          "as": "students"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.students === 0 ? 0.1 : datum.students",
+          "as": "students"
+        }
+      ]
+    },
+    {
+      "name": "data_0",
+      "source": "source_0",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "isValid(datum[\"students\"]) && isFinite(+datum[\"students\"])"
+        }
+      ]
+    }
+  ],
+  "projections": [
+    {
+      "name": "projection",
+      "size": {"signal": "[width, height]"},
+      "fit": {"signal": "[data('source_0'), data('data_0')]"},
+      "type": "equalEarth"
+    }
+  ],
+  "marks": [
+    {
+      "name": "layer_0_marks",
+      "type": "shape",
+      "style": ["geoshape"],
+      "from": {"data": "source_0"},
+      "encode": {
+        "update": {
+          "fill": {"value": "lightgray"},
+          "stroke": {"value": "white"},
+          "tooltip": {
+            "signal": "isValid(datum[\"properties.NAME\"]) ? datum[\"properties.NAME\"] : \"\"+datum[\"properties.NAME\"]"
+          },
+          "ariaRoleDescription": {"value": "geoshape"},
+          "description": {
+            "signal": "\"Country: \" + (isValid(datum[\"properties.NAME\"]) ? datum[\"properties.NAME\"] : \"\"+datum[\"properties.NAME\"])"
+          }
+        }
+      },
+      "transform": [{"type": "geoshape", "projection": "projection"}]
+    },
+    {
+      "name": "layer_1_marks",
+      "type": "shape",
+      "style": ["geoshape"],
+      "from": {"data": "data_0"},
+      "encode": {
+        "update": {
+          "fill": {"scale": "color", "field": "students"},
+          "tooltip": {
+            "signal": "{\"Country\": isValid(datum[\"properties.NAME\"]) ? datum[\"properties.NAME\"] : \"\"+datum[\"properties.NAME\"], \"students\": format(datum[\"students\"], \"\")}"
+          },
+          "ariaRoleDescription": {"value": "geoshape"},
+          "description": {
+            "signal": "\"Number of Students: \" + (format(datum[\"students\"], \"\")) + \"; Country: \" + (isValid(datum[\"properties.NAME\"]) ? datum[\"properties.NAME\"] : \"\"+datum[\"properties.NAME\"]) + \"; students: \" + (format(datum[\"students\"], \"\"))"
+          }
+        }
+      },
+      "transform": [{"type": "geoshape", "projection": "projection"}]
+    }
+  ],
+  "scales": [
+    {
+      "name": "color",
+      "type": "linear",
+      "domain": {"data": "data_0", "field": "students"},
+      "range": "heatmap",
+      "interpolate": "hcl",
+      "zero": false
+    }
+  ],
+  "legends": [
+    {
+      "title": "Number of Students",
+      "fill": "color",
+      "gradientLength": {"signal": "clamp(height, 64, 200)"}
+    }
+  ],
+  "config": {}
+}
